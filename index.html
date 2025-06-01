@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Eye Aspect Ratio (EAR) - Rumus Euclidean</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #0b080d 100%);
+            color: white;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+
+        h1 {
+            text-align: center;
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .subtitle {
+            text-align: center;
+            font-size: 1.2em;
+            margin-bottom: 30px;
+            opacity: 0.9;
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+
+        .eye-canvas {
+            background: rgba(255, 255, 255, 0.15);
+            border-radius: 15px;
+            padding: 25px;
+            position: relative;
+            height: 400px;
+        }
+
+        .formula-section {
+            background: rgba(255, 255, 255, 0.15);
+            border-radius: 15px;
+            padding: 20px;
+        }
+
+        .formula {
+            font-size: 2.5em;
+            text-align: center;
+            background: rgba(255, 255, 255, 0.2);
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .explanation {
+            margin: 15px 0;
+            line-height: 2;
+        }
+
+        .controls {
+            text-align: center;
+            margin: 20px 0;
+        }
+
+        .control-btn {
+            background: linear-gradient(45deg, #ff6b6b, #ee5a52);
+            border: none;
+            color: white;
+            padding: 12px 25px;
+            margin: 0 10px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .control-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .ear-value {
+            font-size: 2em;
+            font-weight: bold;
+            text-align: center;
+            margin: 20px 0;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 10px;
+        }
+
+        .landmarks {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 20px;
+            margin-top: 20px;
+        }
+
+        .landmark-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .landmark-item {
+            background: rgba(255, 255, 255, 0.15);
+            padding: 10px;
+            border-radius: 8px;
+            text-align: center;
+            font-size: 2em;
+        }
+
+        canvas {
+            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.1);
+            box-shadow: inset 0 2px 10px rgba(0, 0, 0, 0.2);
+        }
+
+        .status {
+            text-align: center;
+            font-size: 1.2em;
+            margin: 15px 0;
+            padding: 10px;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+        }
+
+        .status.open {
+            background: rgba(76, 175, 80, 0.3);
+            border: 2px solid #4caf50;
+        }
+
+        .status.closed {
+            background: rgba(244, 67, 54, 0.3);
+            border: 2px solid #f44336;
+        }
+
+        @media (max-width: 768px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+            
+            h1 {
+                font-size: 2em;
+            }
+            
+            .formula {
+                font-size: 2em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎯 Eye Aspect Ratio (EAR)</h1>
+        <p class="subtitle">Deteksi Kedipan Mata Menggunakan Rumus Euclidean</p>
+
+        <div class="main-content">
+            <div class="eye-canvas">
+                <h3 style="text-align: center; margin-bottom: 20px;">👁️ Visualisasi Mata</h3>
+                <canvas id="eyeCanvas" width="400" height="300"></canvas>
+                <div class="controls">
+                    <button class="control-btn" onclick="animateEye()">🔄 Animasi Kedip</button>
+                    <button class="control-btn" onclick="toggleAnimation()">⏸️ Pause/Play</button>
+                </div>
+            </div>
+
+            <div class="formula-section">
+                <h3 style="text-align: center;">📐 Rumus EAR</h3>
+                <div class="formula">
+                    EAR = <br>
+                    <span style="font-size: 0.8em;">||P₂ - P₆|| + ||P₃ - P₅||</span><br>
+                    ──────────────────<br>
+                    <span style="font-size: 0.8em;">2 × ||P₁ - P₄||</span>
+                </div>
+                
+                <div class="explanation">
+                    <strong>Keterangan:</strong><br>
+                    • P₁, P₄: Titik horizontal mata (kiri & kanan)<br>
+                    • P₂, P₃, P₅, P₆: Titik vertikal mata<br>
+                    • ||·||: Jarak Euclidean antara dua titik<br>
+                    • EAR ≈ 0.25-0.35: Mata terbuka<br>
+                    • EAR < 0.25: Mata tertutup
+                </div>
+
+                <div class="ear-value" id="earValue">
+                    EAR: 0.300
+                </div>
+
+                <div class="status open" id="eyeStatus">
+                    👁️ MATA TERBUKA
+                </div>
+            </div>
+        </div>
+
+        <div class="landmarks">
+            <h2 style="text-align: center;">📍 Koordinat Landmark Mata</h2>
+            <div class="landmark-grid">
+                <div class="landmark-item">P₁: <span id="p1">(50, 150)</span></div>
+                <div class="landmark-item">P₂: <span id="p2">(120, 130)</span></div>
+                <div class="landmark-item">P₃: <span id="p3">(160, 130)</span></div>
+                <div class="landmark-item">P₄: <span id="p4">(230, 150)</span></div>
+                <div class="landmark-item">P₅: <span id="p5">(160, 170)</span></div>
+                <div class="landmark-item">P₆: <span id="p6">(120, 170)</span></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('eyeCanvas');
+        const ctx = canvas.getContext('2d');
+        let animationId;
+        let isAnimating = false;
+        let blinkPhase = 0;
+
+        // Landmark mata (dalam koordinat canvas)
+        let eyeLandmarks = {
+            p1: {x: 50, y: 150},   // Kiri mata
+            p2: {x: 120, y: 130},  // Atas kiri
+            p3: {x: 160, y: 130},  // Atas kanan
+            p4: {x: 230, y: 150},  // Kanan mata
+            p5: {x: 160, y: 170},  // Bawah kanan
+            p6: {x: 120, y: 170}   // Bawah kiri
+        };
+
+        // Hitung jarak Euclidean
+        function euclideanDistance(p1, p2) {
+            return Math.sqrt(Math.pow(p2.x - p1.x, 2) + Math.pow(p2.y - p1.y, 2));
+        }
+
+        // Hitung EAR
+        function calculateEAR() {
+            const d1 = euclideanDistance(eyeLandmarks.p2, eyeLandmarks.p6);
+            const d2 = euclideanDistance(eyeLandmarks.p3, eyeLandmarks.p5);
+            const d3 = euclideanDistance(eyeLandmarks.p1, eyeLandmarks.p4);
+            
+            return (d1 + d2) / (2 * d3);
+        }
+
+        // Gambar mata
+        function drawEye() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // Gambar bentuk mata
+            ctx.strokeStyle = '#ffffff';
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.1)';
+            ctx.lineWidth = 3;
+            
+            ctx.beginPath();
+            ctx.moveTo(eyeLandmarks.p1.x, eyeLandmarks.p1.y);
+            ctx.quadraticCurveTo(eyeLandmarks.p2.x, eyeLandmarks.p2.y, eyeLandmarks.p3.x, eyeLandmarks.p3.y);
+            ctx.quadraticCurveTo(eyeLandmarks.p4.x, eyeLandmarks.p4.y, eyeLandmarks.p5.x, eyeLandmarks.p5.y);
+            ctx.quadraticCurveTo(eyeLandmarks.p6.x, eyeLandmarks.p6.y, eyeLandmarks.p1.x, eyeLandmarks.p1.y);
+            ctx.closePath();
+            ctx.fill();
+            ctx.stroke();
+
+            // Gambar landmark points
+            Object.keys(eyeLandmarks).forEach((key, index) => {
+                const point = eyeLandmarks[key];
+                ctx.fillStyle = '#ff6b6b';
+                ctx.beginPath();
+                ctx.arc(point.x, point.y, 6, 0, 2 * Math.PI);
+                ctx.fill();
+                
+                // Label titik
+                ctx.fillStyle = '#ffffff';
+                ctx.font = '14px Arial';
+                ctx.fillText(`P${index + 1}`, point.x + 10, point.y - 10);
+            });
+
+            // Gambar garis pengukuran
+            ctx.strokeStyle = '#ffeb3b';
+            ctx.lineWidth = 2;
+            ctx.setLineDash([5, 5]);
+            
+            // Garis vertikal
+            ctx.beginPath();
+            ctx.moveTo(eyeLandmarks.p2.x, eyeLandmarks.p2.y);
+            ctx.lineTo(eyeLandmarks.p6.x, eyeLandmarks.p6.y);
+            ctx.stroke();
+            
+            ctx.beginPath();
+            ctx.moveTo(eyeLandmarks.p3.x, eyeLandmarks.p3.y);
+            ctx.lineTo(eyeLandmarks.p5.x, eyeLandmarks.p5.y);
+            ctx.stroke();
+            
+            // Garis horizontal
+            ctx.beginPath();
+            ctx.moveTo(eyeLandmarks.p1.x, eyeLandmarks.p1.y);
+            ctx.lineTo(eyeLandmarks.p4.x, eyeLandmarks.p4.y);
+            ctx.stroke();
+            
+            ctx.setLineDash([]);
+        }
+
+        // Update tampilan
+        function updateDisplay() {
+            const ear = calculateEAR();
+            document.getElementById('earValue').textContent = `EAR: ${ear.toFixed(3)}`;
+            
+            const status = document.getElementById('eyeStatus');
+            if (ear < 0.25) {
+                status.textContent = '😴 MATA TERTUTUP';
+                status.className = 'status closed';
+            } else {
+                status.textContent = '👁️ MATA TERBUKA';
+                status.className = 'status open';
+            }
+
+            // Update koordinat
+            Object.keys(eyeLandmarks).forEach((key, index) => {
+                const point = eyeLandmarks[key];
+                document.getElementById(`p${index + 1}`).textContent = `(${Math.round(point.x)}, ${Math.round(point.y)})`;
+            });
+        }
+
+        // Animasi kedipan
+        function animateEye() {
+            if (!isAnimating) {
+                isAnimating = true;
+                blinkPhase = 0;
+                animate();
+            }
+        }
+
+        function animate() {
+            if (!isAnimating) return;
+
+            blinkPhase += 0.10;
+            
+            // Simulasi kedipan dengan mengubah koordinat Y vertikal
+            const blinkAmount = Math.sin(blinkPhase) * 20;
+            
+            eyeLandmarks.p2.y = 130 + blinkAmount;
+            eyeLandmarks.p3.y = 130 + blinkAmount;
+            eyeLandmarks.p5.y = 170 - blinkAmount;
+            eyeLandmarks.p6.y = 170 - blinkAmount;
+
+            drawEye();
+            updateDisplay();
+
+            if (blinkPhase < Math.PI * 2) {
+                animationId = requestAnimationFrame(animate);
+            } else {
+                isAnimating = false;
+                // Reset ke posisi normal
+                eyeLandmarks.p2.y = 130;
+                eyeLandmarks.p3.y = 130;
+                eyeLandmarks.p5.y = 170;
+                eyeLandmarks.p6.y = 170;
+                drawEye();
+                updateDisplay();
+            }
+        }
+
+        function toggleAnimation() {
+            if (isAnimating) {
+                isAnimating = false;
+                cancelAnimationFrame(animationId);
+            } else {
+                animateEye();
+            }
+        }
+
+        // Inisialisasi
+        drawEye();
+        updateDisplay();
+
+        // Auto-animasi setiap 3 detik
+        setInterval(() => {
+            if (!isAnimating) {
+                animateEye();
+            }
+        }, 2500);
+    </script>
+</body>
+</html>
